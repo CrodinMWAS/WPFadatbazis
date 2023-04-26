@@ -1,0 +1,46 @@
+/*
+String GetConnectionString(string ds, string port, string user, string pass, string db)
+{
+    return $"datasource={ds};port={port};username={user};password={pass};database={db};";
+}
+*/
+using MySql.Data.MySqlClient;
+
+const string kapcsolatLeiro = "datasource=127.0.0.1;port=3306;username=root;password=;database=hardver;";
+
+MySqlConnection SQLkapcsolat = new MySqlConnection(kapcsolatLeiro);
+
+try
+{
+    //Kritikus
+    SQLkapcsolat.Open();
+}
+catch (MySqlException hiba)
+{
+    Console.WriteLine("Nem tud kapcsolódni az adatbázishoz!");
+    Console.WriteLine(hiba.Message);
+    Environment.Exit(0);
+}
+
+//SQL lekérdezés lőkészítése
+string SQLGyartokRendezve = "SELECT DISTINCT gyártó FROM termékek ORDER BY gyártó;";
+
+MySqlCommand SQLparancs = new MySqlCommand(SQLGyartokRendezve, SQLkapcsolat);
+
+//Kritikus
+//SQL parancs végrehajtása
+MySqlDataReader eredmenyTabla = SQLparancs.ExecuteReader();
+
+//Eredmény végigolvasása
+while (eredmenyTabla.Read())
+{
+    Console.WriteLine(eredmenyTabla.GetString(2));
+    //Console.WriteLine(eredmenyTabla.GetInt32("Ár"));
+    //Console.WriteLine(Convert.ToInt32(eredmenyTabla.GetString("Ár")));
+}
+//FONTOS! Erőforrások lezárása.
+eredmenyTabla.Close();
+
+//Itt jöhetne újabb SQL lekérdezés
+
+SQLkapcsolat.Close();
