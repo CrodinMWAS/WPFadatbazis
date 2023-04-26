@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.Win32;
 using MySql.Data.MySqlClient;
 
 namespace WpfAppAdatbazis
@@ -33,7 +35,6 @@ namespace WpfAppAdatbazis
             LoadDatabase();
             LoadDropdownIn();
             LoadContentIn();
-
 
         }
 
@@ -91,7 +92,8 @@ namespace WpfAppAdatbazis
         public void LoadContentIn(string par = "SELECT * FROM termekek")
         {
             termekek.Clear();
-            //Megcsinálni úgy hogy ha üres akkor így működjön amúgy meg úgy hogy btnszukit_clickkel is menjen
+            dgTermekek.ItemsSource = termekek;
+            
             MySqlDataReader returned = Query(par);
             while (returned.Read())
             {
@@ -107,27 +109,52 @@ namespace WpfAppAdatbazis
             returned.Close();
 
             dgTermekek.ItemsSource = termekek;
+            dgTermekek.Items.Refresh();
         }
         private void btnSzukit_Click(object sender, RoutedEventArgs e)
         {
             string queryString = "SELECT * FROM termekek";
-            //MessageBox.Show(cbKategoria.SelectedItem.ToString());
-            if (cbGyarto.SelectedIndex != 0 && cbKategoria.SelectedIndex != 0)
+
+            if (cbGyarto.SelectedIndex != 0 && cbKategoria.SelectedIndex != 0 && txtTermek.Text != "")
             {
-                queryString += $" WHERE Kategoria LIKE {cbKategoria.SelectedItem} AND Gyarto LIKE {cbGyarto.SelectedItem}";
+                queryString += $" WHERE Kategoria LIKE '{cbKategoria.SelectedItem}' AND Gyarto LIKE '{cbGyarto.SelectedItem}' AND Nev LIKE '%{txtTermek.Text}%'";
             }
-            else
+            else if (cbGyarto.SelectedIndex != 0 && cbKategoria.SelectedIndex != 0)
             {
-                if (cbKategoria.SelectedIndex != 0)
-                {
-                    queryString += $" WHERE Kategoria LIKE {cbKategoria.SelectedItem}";
-                }
-                if (cbGyarto.SelectedIndex != 0)
-                {
-                    queryString += $" WHERE Gyarto LIKE {cbGyarto.SelectedItem}";
-                }
+                queryString += $" WHERE Kategoria LIKE '{cbKategoria.SelectedItem}' AND Gyarto LIKE '{cbGyarto.SelectedItem}'";
             }
+            else if (cbKategoria.SelectedIndex != 0)
+            {
+                queryString += $" WHERE Kategoria LIKE '{cbKategoria.SelectedItem}'";
+            }
+            else if(cbGyarto.SelectedIndex != 0)
+            {
+                queryString += $" WHERE Gyarto LIKE '{cbGyarto.SelectedItem}'";
+            }
+
             LoadContentIn(queryString);
+            queryString = "";
+        }
+
+        private void DataBaseclose()
+        {
+            SQLConnection.Close();
+            SQLConnection.Dispose();
+        }
+
+        private void btnMentes_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            if (openFileDialog.ShowDialog() == true)
+            {
+            StreamWriter sw = new StreamWriter(openFileDialog.FileName);
+                foreach (var item in termekek)
+                {
+                    sw.WriteLine(item.ToCSVString());
+                }
+                sw.Close();
+
+            }
         }
     }
 }
